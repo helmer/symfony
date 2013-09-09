@@ -42,14 +42,23 @@ class ProcessUtils
         //@see https://bugs.php.net/bug.php?id=49446
         if (defined('PHP_WINDOWS_VERSION_BUILD')) {
             $escapedArgument = '';
+            $quote = FALSE;
             foreach (preg_split('/([%"])/i', $argument, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE) as $part) {
                 if ('"' == $part) {
                     $escapedArgument .= '\\"';
                 } elseif ('%' == $part) {
                     $escapedArgument .= '^%';
                 } else {
-                    $escapedArgument .= escapeshellarg($part);
+                    $part = escapeshellarg($part);
+                    if ($part[0] === '"' && $part[strlen($part) - 1] === '"') {
+                        $part = substr($part, 1, -1);
+                        $quote = TRUE;
+                    }
+                    $escapedArgument .= $part;
                 }
+            }
+            if ($quote) {
+                $escapedArgument = '"' . $escapedArgument . '"';
             }
 
             return $escapedArgument;
